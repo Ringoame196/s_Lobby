@@ -22,6 +22,7 @@ repositories {
     mavenCentral()
     maven(url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven(url = "https://oss.sonatype.org/content/groups/public/")
+    maven(url = "https://jitpack.io")
 }
 
 val shadowImplementation: Configuration by configurations.creating
@@ -30,10 +31,12 @@ configurations["implementation"].extendsFrom(shadowImplementation)
 dependencies {
     shadowImplementation(kotlin("stdlib"))
     compileOnly("org.spigotmc:spigot-api:$pluginVersion-R0.1-SNAPSHOT")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.0")
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
 }
 
 configure<BukkitPluginDescription> {
-    main = "@group@.Main"
+    main = "com.github.Ringoame196.Main"
     version = gitVersion()
     apiVersion = "1." + pluginVersion.split(".")[1]
 }
@@ -41,13 +44,19 @@ configure<BukkitPluginDescription> {
 tasks.withType<ShadowJar> {
     configurations = listOf(shadowImplementation)
     archiveClassifier.set("")
-    relocate("kotlin", "@group@.libs.kotlin")
-    relocate("org.intellij.lang.annotations", "@group@.libs.org.intellij.lang.annotations")
-    relocate("org.jetbrains.annotations", "@group@.libs.org.jetbrains.annotations")
+    relocate("kotlin", "com.github.Ringoame196.libs.kotlin")
+    relocate("org.intellij.lang.annotations", "com.github.Ringoame196.libs.org.intellij.lang.annotations")
+    relocate("org.jetbrains.annotations", "com.github.Ringoame196.libs.org.jetbrains.annotations")
 }
 
 tasks.named("build") {
     dependsOn("shadowJar")
+    doFirst {
+        copy {
+            from(buildDir.resolve("libs/${project.name}.jar"))
+            into("D:/デスクトップ")
+        }
+    }
 }
 
 task<LaunchMinecraftServerTask>("buildAndLaunchServer") {
