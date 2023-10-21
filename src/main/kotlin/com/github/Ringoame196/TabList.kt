@@ -10,6 +10,9 @@ class TabList {
             "world" -> "ロビーワールド"
             "Survival" -> "資源ワールド"
             "Nether" -> "ネザー"
+            "shop" -> "ショップ"
+            "event" -> "イベントワールド"
+            "Home" -> "建築ワールド"
             else -> title
         }
     }

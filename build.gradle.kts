@@ -23,6 +23,7 @@ repositories {
     maven(url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven(url = "https://oss.sonatype.org/content/groups/public/")
     maven(url = "https://jitpack.io")
+    maven(url ="https://maven.enginehub.org/repo/")
 }
 
 val shadowImplementation: Configuration by configurations.creating
@@ -33,6 +34,8 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:$pluginVersion-R0.1-SNAPSHOT")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.0")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
+    implementation("com.sk89q.worldguard:worldguard-bukkit:7.0.1")
+    compileOnly ("com.sk89q.worldguard:worldguard-bukkit:VERSION")
 }
 
 configure<BukkitPluginDescription> {

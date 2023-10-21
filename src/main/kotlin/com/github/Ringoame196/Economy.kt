@@ -11,16 +11,22 @@ class Economy {
         val economy = rsp?.provider
         return economy?.getBalance(player)
     }
-    fun add(player: Player, amount: Int) {
+    fun add(player: Player, amount: Int, unei: Boolean) {
         val rsp = Bukkit.getServicesManager().getRegistration(Economy::class.java)
         val economy = rsp?.provider
         economy!!.depositPlayer(player, amount.toDouble())
-        player.sendMessage("${ChatColor.AQUA}+${amount}円")
+        Player().sendActionBar(player, "${ChatColor.AQUA}+${amount}円")
+        if (unei) {
+            economy.withdrawPlayer("akamaruXkun", amount.toDouble())
+        }
     }
-    fun remove(player: Player, amount: Int) {
+    fun remove(player: Player, amount: Int, unei: Boolean) {
         val rsp = Bukkit.getServicesManager().getRegistration(Economy::class.java)
         val economy = rsp?.provider
         economy?.withdrawPlayer(player, amount.toDouble())
-        player.sendMessage("${ChatColor.RED}-${amount}円")
+        Player().sendActionBar(player, "${ChatColor.RED}-${amount}円")
+        if (unei) {
+            economy?.depositPlayer("akamaruXkun", amount.toDouble())
+        }
     }
 }
