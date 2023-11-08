@@ -16,7 +16,7 @@ class Smartphone {
         gui.setItem(5, Item().make(Material.TRIPWIRE_HOOK, "${ChatColor.RED}アイテム保護", null, null))
         gui.setItem(7, Item().make(Material.SLIME_BALL, "${ChatColor.GREEN}プレイヤー評価", null, null))
         gui.setItem(8, Item().make(Material.COMMAND_BLOCK, "${ChatColor.YELLOW}OP用", null, null))
-        gui.setItem(10, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
+        gui.setItem(10, Item().make(Material.GOLDEN_AXE, "${ChatColor.GREEN}土地保護", null, null))
         gui.setItem(12, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
         gui.setItem(14, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
         gui.setItem(16, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
@@ -24,11 +24,11 @@ class Smartphone {
         gui.setItem(22, Item().make(Material.GOLD_BLOCK, "${ChatColor.GREEN}所持金変換", null, null))
         player.openInventory(gui)
     }
-    fun clickItem(player: Player, item: ItemStack) {
+    fun clickItem(player: Player, item: ItemStack, plugin: Plugin) {
         val itemName = item.itemMeta?.displayName
         player.playSound(player, Sound.UI_BUTTON_CLICK, 1f, 1f)
         when (itemName) {
-            "${ChatColor.YELLOW}エンダーチェスト" -> player.openInventory(player.enderChest)
+            "${ChatColor.YELLOW}エンダーチェスト" -> EnderChest().open(player, plugin)
             "${ChatColor.GREEN}所持金変換" -> conversion(player)
             "${ChatColor.RED}アイテム保護" -> ItemProtection().open(player)
             "${ChatColor.GREEN}テレポート" -> tpGUI(player)
@@ -36,10 +36,10 @@ class Smartphone {
             "${ChatColor.GREEN}生活ワールド" -> player.teleport(Bukkit.getWorld("Home")?.spawnLocation ?: return)
             "${ChatColor.AQUA}資源ワールド" -> player.teleport(Bukkit.getWorld("Survival")?.spawnLocation ?: return)
             "${ChatColor.YELLOW}ショップ" -> player.teleport(Bukkit.getWorld("shop")?.spawnLocation ?: return)
-            "${ChatColor.YELLOW}ダンジョン" -> player.teleport(Bukkit.getWorld("world")?.spawnLocation ?: return)
-            "${ChatColor.RED}イベント" -> player.teleport(Bukkit.getWorld("world")?.spawnLocation ?: return)
+            "${ChatColor.RED}イベント" -> player.teleport(Bukkit.getWorld("event")?.spawnLocation ?: return)
             "${ChatColor.YELLOW}OP用" -> op(player)
             "${ChatColor.GREEN}プレイヤー評価" -> Evaluation().display(player)
+            "${ChatColor.GREEN}土地保護" -> wgGUI(player)
         }
         if (item.type == Material.EMERALD && (item.itemMeta?.customModelData ?: return) >= 1) {
             if ((item.itemMeta?.customModelData ?: return) > 4) { return }
@@ -47,17 +47,120 @@ class Smartphone {
             moneyItem(player, money ?: return, item)
         }
     }
-    fun opClick(item: ItemStack, plugin: Plugin) {
+    fun opClick(item: ItemStack, plugin: Plugin, shift: Boolean) {
         when (item.itemMeta?.displayName) {
             "${ChatColor.RED}ショップ保護リセット" -> {
+                if (!shift) { return }
                 val list = Yml().getList(plugin, "conservationLand", "protectedName") ?: return
                 for (name in list) {
+                    if (Scoreboard().getValue("protectionContract", name) == 2) {
+                        Scoreboard().remove("protectionContract", name, 1)
+                        continue
+                    }
                     WorldGuard().resetOwner(name, Bukkit.getWorld("shop") ?: return)
+                    WorldGuard().resetMember(name, Bukkit.getWorld("shop") ?: return)
                     Yml().removeFromList(plugin, "conservationLand", "protectedName", name)
                 }
                 Bukkit.broadcastMessage("${ChatColor.RED}[ショップ] ショップの購入土地がリセットされました")
             }
+            "${ChatColor.YELLOW}リソパ更新" -> ResourcePack().update(plugin)
+            "${ChatColor.GREEN}運営ギフトリセット" -> {
+                if (!Scoreboard().existence("admingift")) { return }
+                Scoreboard().delete("admingift")
+                Scoreboard().make("admingift", "admingift")
+                Bukkit.broadcastMessage("${ChatColor.YELLOW}[青りんごサーバー] 運営ギフトがリセットされました")
+            }
         }
+    }
+    fun wgClick(item: ItemStack, plugin: Plugin, player: Player, shift: Boolean) {
+        if (player.world.name != "Home" && !player.isOp) {
+            Player().errorMessage(player, "保護は生活ワールドのみ使用可能です")
+            player.closeInventory()
+            return
+        }
+        player.playSound(player, Sound.UI_BUTTON_CLICK, 1f, 1f)
+        when (item.itemMeta?.displayName) {
+            "${ChatColor.GOLD}木の斧ゲット" -> player.inventory.addItem(ItemStack(Material.WOODEN_AXE))
+            "${ChatColor.AQUA}保護一覧" -> {
+                player.closeInventory()
+                LandPurchase().listRegionsInWorld(player)
+            }
+            "${ChatColor.YELLOW}保護作成" -> {
+                player.closeInventory()
+                player.addScoreboardTag("rg")
+                player.sendMessage("${ChatColor.AQUA}[土地保護]保護名を入力してください")
+            }
+            "${ChatColor.GREEN}情報" -> {
+                val gui = player.openInventory.topInventory
+                gui.setItem(2, Item().make(Material.MAP, "${ChatColor.YELLOW}保護情報", null, null))
+                gui.setItem(4, Item().make(Material.PLAYER_HEAD, "${ChatColor.AQUA}メンバー追加", null, null))
+                gui.setItem(6, Item().make(Material.PLAYER_HEAD, "${ChatColor.RED}メンバー削除", null, null))
+                gui.setItem(8, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}削除", "${ChatColor.DARK_RED}シフトで実行", null))
+            }
+            "${ChatColor.YELLOW}保護情報" -> {
+                player.closeInventory()
+                player.sendMessage("${ChatColor.YELLOW}-----保護情報-----")
+                if (WorldGuard().getName(player.location) == null) {
+                    player.sendMessage("${ChatColor.RED}保護されていません")
+                    return
+                }
+                player.sendMessage("${ChatColor.GOLD}保護名:${WorldGuard().getName(player.location)}")
+                player.sendMessage("${ChatColor.YELLOW}オーナー:" + if (WorldGuard().getOwnerOfRegion(player.location)?.contains(player.uniqueId) == true) { "${ChatColor.GOLD}あなたはオーナーです" } else { "${ChatColor.RED}あなたはオーナーではありません" })
+                player.sendMessage("${ChatColor.AQUA}メンバー:" + if (WorldGuard().getMemberOfRegion(player.location)?.contains(player.uniqueId) == true) { "${ChatColor.GOLD}あなたはメンバーです" } else { "${ChatColor.RED}あなたはメンバーではありません" })
+            }
+            "${ChatColor.AQUA}メンバー追加" -> {
+                if (WorldGuard().getOwnerOfRegion(player.location)?.contains(player.uniqueId) != true) {
+                    Player().errorMessage(player, "自分の保護土地内で実行してください")
+                    return
+                }
+                LandPurchase().addMemberGUI(player, WorldGuard().getName(player.location) ?: return)
+            }
+            "${ChatColor.RED}メンバー削除" -> {
+                if (WorldGuard().getOwnerOfRegion(player.location)?.contains(player.uniqueId) != true) {
+                    Player().errorMessage(player, "自分の保護土地内で実行してください")
+                    return
+                }
+                LandPurchase().removeMemberGUI(player, WorldGuard().getName(player.location) ?: return)
+            }
+            "${ChatColor.RED}削除" -> {
+                if (WorldGuard().getOwnerOfRegion(player.location)?.contains(player.uniqueId) != true) {
+                    Player().errorMessage(player, "自分の保護土地内で実行してください")
+                    return
+                }
+                if (!shift) { return }
+                WorldGuard().delete(player, WorldGuard().getName(player.location) ?: return)
+                player.sendMessage("${ChatColor.RED}保護を削除しました")
+                player.closeInventory()
+            }
+        }
+    }
+    fun protectionGUI(player: Player, name: String) {
+        if (LandPurchase().doesRegionContainProtection(player)) {
+            Player().errorMessage(player, "保護範囲が含まれています")
+            return
+        }
+        if (WorldGuard().getProtection(player, name)) {
+            Player().errorMessage(player, "同じ名前の保護を設定することは不可能です")
+            return
+        }
+        val gui = Bukkit.createInventory(null, 9, "${ChatColor.BLUE}保護設定($name)")
+        gui.setItem(4, Item().make(Material.GREEN_WOOL, "${ChatColor.GREEN}作成", "${LandPurchase().price(player)}円", null))
+        player.openInventory(gui)
+    }
+    fun protection(player: Player, item: ItemStack, name: String) {
+        val price = item.itemMeta?.lore?.get(0)?.replace("円", "")?.toInt() ?: return
+        if ((Economy().get(player) ?: return) < price) {
+            Player().errorMessage(player, "お金が足りません")
+            return
+        }
+        player.performCommand("/expand vert")
+        player.performCommand("rg claim $name")
+        if (WorldGuard().getProtection(player, name)) {
+            player.sendMessage("${ChatColor.GREEN}[WG]正常に保護をかけました")
+            Economy().remove(player, price, true)
+            player.playSound(player, Sound.BLOCK_ANVIL_USE, 1f, 1f)
+        }
+        player.closeInventory()
     }
     private fun tpGUI(player: Player) {
         val gui = Bukkit.createInventory(null, 27, "${ChatColor.BLUE}スマートフォン")
@@ -65,14 +168,23 @@ class Smartphone {
         gui.setItem(3, Item().make(Material.GRASS_BLOCK, "${ChatColor.GREEN}生活ワールド", null, null))
         gui.setItem(5, Item().make(Material.DIAMOND_PICKAXE, "${ChatColor.AQUA}資源ワールド", null, null))
         gui.setItem(7, Item().make(Material.QUARTZ_BLOCK, "${ChatColor.YELLOW}ショップ", null, null))
-        gui.setItem(19, Item().make(Material.OBSIDIAN, "${ChatColor.YELLOW}ダンジョン", null, null))
-        gui.setItem(21, Item().make(Material.BEDROCK, "${ChatColor.RED}イベント", null, null))
+        gui.setItem(19, Item().make(Material.BEDROCK, "${ChatColor.RED}イベント", null, null))
         player.openInventory(gui)
     }
     private fun op(player: Player) {
         if (!player.isOp) { return }
         val gui = Bukkit.createInventory(null, 9, "${ChatColor.YELLOW}OP用")
-        gui.setItem(0, Item().make(Material.WOODEN_AXE, "${ChatColor.RED}ショップ保護リセット", null, null))
+        gui.setItem(0, Item().make(Material.COMMAND_BLOCK, "${ChatColor.YELLOW}リソパ更新", null, null))
+        gui.setItem(2, Item().make(Material.WOODEN_AXE, "${ChatColor.RED}ショップ保護リセット", null, null))
+        gui.setItem(4, Item().make(Material.DIAMOND, "${ChatColor.GREEN}運営ギフトリセット", null, null))
+        player.openInventory(gui)
+    }
+    private fun wgGUI(player: Player) {
+        val gui = Bukkit.createInventory(null, 9, "${ChatColor.YELLOW}WorldGuardGUI")
+        gui.setItem(2, Item().make(Material.GOLDEN_AXE, "${ChatColor.YELLOW}保護作成", "${LandPurchase().price(player)}円", null))
+        gui.setItem(4, Item().make(Material.MAP, "${ChatColor.GREEN}情報", null, null))
+        gui.setItem(6, Item().make(Material.CHEST, "${ChatColor.AQUA}保護一覧", null, null))
+        gui.setItem(8, Item().make(Material.WOODEN_AXE, "${ChatColor.GOLD}木の斧ゲット", null, null))
         player.openInventory(gui)
     }
     private fun conversion(player: Player) {
@@ -92,5 +204,6 @@ class Smartphone {
             player.inventory.addItem(giveItem)
             Economy().remove(player, money, false)
         }
+        player.closeInventory()
     }
 }

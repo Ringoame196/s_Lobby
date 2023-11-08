@@ -16,7 +16,7 @@ class Evaluation {
     fun display(player: Player) {
         val gui = Bukkit.createInventory(null, 18, "${ChatColor.BLUE}プレイヤー評価")
         var i = 0
-        for (target in getPlayersInRadius(player.location, 10.0)) {
+        for (target in getPlayersInRadius(player.location, 10.0) ?: return) {
             gui.addItem(playerHead(target))
             if (i == 18) { continue }
             i ++
@@ -59,10 +59,10 @@ class Evaluation {
         item.setItemMeta(meta)
         return item
     }
-    fun getPlayersInRadius(center: Location, radius: Double): List<Player> {
+    fun getPlayersInRadius(center: Location, radius: Double): List<Player>? {
         val playersInRadius = mutableListOf<Player>()
 
-        for (player in Bukkit.getOnlinePlayers()) {
+        for (player in center.world?.players ?: return null) {
             val playerLocation = player.location
             val distance = center.distance(playerLocation)
 

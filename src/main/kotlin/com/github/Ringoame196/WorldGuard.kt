@@ -5,12 +5,21 @@ import com.sk89q.worldguard.WorldGuard
 import com.sk89q.worldguard.domains.DefaultDomain
 import com.sk89q.worldguard.protection.managers.RegionManager
 import com.sk89q.worldguard.protection.regions.ProtectedRegion
+import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Player
+import java.util.UUID
 
 class WorldGuard {
+    fun getProtection(player: Player, regionName: String): Boolean {
+        val worldGuard = WorldGuard.getInstance()
+        val regionContainer = worldGuard.platform.regionContainer
+        val regionManager: RegionManager? = regionContainer.get(BukkitAdapter.adapt(player.world))
+        val region: ProtectedRegion? = regionManager?.getRegion(regionName)
+        return region != null
+    }
     fun getOwnerOfRegion(location: Location): DefaultDomain? {
         val worldGuard = WorldGuard.getInstance()
         val regionContainer = worldGuard.platform.regionContainer
@@ -26,6 +35,13 @@ class WorldGuard {
 
         // リージョンのオーナーを返す
         return firstRegion.owners
+    }
+    fun delete(player: Player, regionName: String) {
+        val worldGuard = WorldGuard.getInstance()
+        val regionContainer = worldGuard.platform.regionContainer
+        val regionManager: RegionManager? = regionContainer.get(BukkitAdapter.adapt(player.world))
+        val region: ProtectedRegion? = regionManager?.getRegion(regionName)
+        regionManager?.removeRegion(region?.id)
     }
     fun getMemberOfRegion(location: Location): DefaultDomain? {
         val worldGuard = WorldGuard.getInstance()
@@ -66,12 +82,12 @@ class WorldGuard {
         val region: ProtectedRegion? = regionManager?.getRegion(regionName)
         return region?.owners?.toPlayersString()
     }
-    fun getMember(world: World, regionName: String): String? {
-        val worldGuard = WorldGuard.getInstance()
-        val regionContainer = worldGuard.platform.regionContainer
-        val regionManager: RegionManager? = regionContainer.get(BukkitAdapter.adapt(world))
+    fun getMember(worldName: String, regionName: String): DefaultDomain? {
+        val world = Bukkit.getWorld(worldName)
+        val regionManager: RegionManager? = WorldGuard.getInstance().platform.regionContainer.get(BukkitAdapter.adapt(world))
         val region: ProtectedRegion? = regionManager?.getRegion(regionName)
-        return region?.members?.toPlayersString()
+
+        return region?.members
     }
     fun addOwnerToRegion(regionName: String, player: Player) {
         val newOwner = player.uniqueId
@@ -94,6 +110,39 @@ class WorldGuard {
 
         if (region != null) {
             region.owners.removeAll()
+            regionManager.save()
+        }
+    }
+    fun addMemberToRegion(regionName: String, player: Player) {
+        val newOwner = player.uniqueId
+        val worldGuard = WorldGuard.getInstance()
+        val regionContainer = worldGuard.platform.regionContainer
+        val world = player.world
+        val regionManager: RegionManager? = regionContainer.get(BukkitAdapter.adapt(world))
+        val region: ProtectedRegion? = regionManager?.getRegion(regionName)
+        if (region != null) {
+            region.members.addPlayer(newOwner)
+            regionManager.save()
+        }
+    }
+    fun removeMember(regionName: String, uuid: String, world: World) {
+        val worldGuard = WorldGuard.getInstance()
+        val regionContainer = worldGuard.platform.regionContainer
+        val regionManager: RegionManager? = regionContainer.get(BukkitAdapter.adapt(world))
+        val region: ProtectedRegion? = regionManager?.getRegion(regionName)
+        if (region != null) {
+            region.members.removePlayer(UUID.fromString(uuid))
+            regionManager.save()
+        }
+    }
+    fun resetMember(regionName: String, world: World) {
+        val worldGuard = WorldGuard.getInstance()
+        val regionContainer = worldGuard.platform.regionContainer
+        val regionManager: RegionManager? = regionContainer.get(BukkitAdapter.adapt(world))
+        val region: ProtectedRegion? = regionManager?.getRegion(regionName)
+
+        if (region != null) {
+            region.members.removeAll()
             regionManager.save()
         }
     }

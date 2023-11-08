@@ -57,4 +57,12 @@ class ItemProtection {
         player.sendMessage("${ChatColor.RED}所有者を削除しました")
         return item
     }
+    fun isProtection(item: ItemStack?): Boolean {
+        val meta = item?.itemMeta
+        for (lore in meta?.lore ?: return false) {
+            if (!lore.contains("所有者:")) { continue }
+            return true
+        }
+        return false
+    }
 }

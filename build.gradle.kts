@@ -78,4 +78,5 @@ task<LaunchMinecraftServerTask>("buildAndLaunchServer") {
     agreeEula.set(true)
 }
 
+
 task<SetupTask>("setup")
