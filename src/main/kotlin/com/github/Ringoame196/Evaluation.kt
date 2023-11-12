@@ -30,8 +30,8 @@ class Evaluation {
         }
         val gui = Bukkit.createInventory(null, 9, "${ChatColor.BLUE}プレイヤー評価")
         gui.setItem(2, target)
-        gui.setItem(4, Item().make(Material.STONE_BUTTON, "${ChatColor.GREEN}+1", null, null))
-        gui.setItem(6, Item().make(Material.STONE_BUTTON, "${ChatColor.RED}-1", null, null))
+        gui.setItem(4, Item().make(Material.STONE_BUTTON, "${ChatColor.GREEN}高評価", null, null))
+        gui.setItem(6, Item().make(Material.STONE_BUTTON, "${ChatColor.RED}低評価", null, null))
         player.openInventory(gui)
     }
     fun void(target: ItemStack, button: String, player: Player) {
@@ -40,8 +40,8 @@ class Evaluation {
         Scoreboard().set(
             "evaluation", targetUUID,
             when (button) {
-                "${ChatColor.GREEN}+1" -> evaluation + 1
-                "${ChatColor.RED}-1" -> evaluation - 1
+                "${ChatColor.GREEN}高評価" -> evaluation + 1
+                "${ChatColor.RED}低評価" -> evaluation - 1
                 else -> return
             }
         )

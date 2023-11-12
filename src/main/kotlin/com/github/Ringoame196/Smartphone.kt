@@ -20,7 +20,7 @@ class Smartphone {
         gui.setItem(12, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
         gui.setItem(14, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
         gui.setItem(16, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
-        gui.setItem(21, Item().make(Material.GOLD_INGOT, "${ChatColor.GOLD}所持金", "${Economy().get(player)?.toInt()}円", null))
+        gui.setItem(21, Item().make(Material.GOLD_INGOT, "${ChatColor.GOLD}所持金", "${String.format("%,d", Economy().get(player)?.toInt())}円", null))
         gui.setItem(22, Item().make(Material.GOLD_BLOCK, "${ChatColor.GREEN}所持金変換", null, null))
         player.openInventory(gui)
     }
@@ -202,7 +202,7 @@ class Smartphone {
             val giveItem = item.clone()
             giveItem.amount = 1
             player.inventory.addItem(giveItem)
-            Economy().remove(player, money, false)
+            Economy().remove(player, money, true)
         }
         player.closeInventory()
     }

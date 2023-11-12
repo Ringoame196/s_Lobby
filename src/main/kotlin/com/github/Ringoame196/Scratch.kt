@@ -30,6 +30,7 @@ class Scratch {
         return ItemStack(itemList[Random.nextInt(0, itemList.size)])
     }
     fun check(gui: InventoryView, item: ItemStack): Int {
+        if (item.type == Material.BARRIER) { return 0 }
         var c = 0
         if (gui.getItem(3) == item) {
             c += 1
