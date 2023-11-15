@@ -27,7 +27,7 @@ class WorldGuard {
         return getRegion(null, null, location)?.owners
     }
     fun delete(player: Player, regionName: String) {
-        getRegionManager(player.world)?.removeRegion(getRegion(player.world,regionName,null)?.id)
+        getRegionManager(player.world)?.removeRegion(getRegion(player.world, regionName, null)?.id)
     }
     fun getMemberOfRegion(location: Location): DefaultDomain? {
         return getRegion(null, null, location)?.members
