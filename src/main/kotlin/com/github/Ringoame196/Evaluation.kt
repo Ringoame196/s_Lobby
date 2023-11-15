@@ -2,7 +2,6 @@ package com.github.Ringoame196
 
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
-import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
@@ -16,7 +15,7 @@ class Evaluation {
     fun display(player: Player) {
         val gui = Bukkit.createInventory(null, 18, "${ChatColor.BLUE}プレイヤー評価")
         var i = 0
-        for (target in getPlayersInRadius(player.location, 10.0) ?: return) {
+        for (target in Player().getPlayersInRadius(player.location, 10.0) ?: return) {
             gui.addItem(playerHead(target))
             if (i == 18) { continue }
             i ++
@@ -58,21 +57,6 @@ class Evaluation {
         meta.lore = mutableListOf("評価:$evaluation", target.uniqueId.toString())
         item.setItemMeta(meta)
         return item
-    }
-    fun getPlayersInRadius(center: Location, radius: Double): List<Player>? {
-        val playersInRadius = mutableListOf<Player>()
-
-        for (player in center.world?.players ?: return null) {
-            val playerLocation = player.location
-            val distance = center.distance(playerLocation)
-
-            if (distance <= radius) {
-                // 半径内にいるプレイヤーをリストに追加
-                playersInRadius.add(player)
-            }
-        }
-
-        return playersInRadius
     }
     fun saveYml(player: Player, plugin: Plugin) {
         val filePath = File(plugin.dataFolder, "/evaluation.yml")

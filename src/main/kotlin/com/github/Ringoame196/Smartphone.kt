@@ -9,24 +9,46 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.Plugin
 
 class Smartphone {
-    fun open(player: Player) {
+    fun open(plugin: Plugin, player: Player) {
         val gui = Bukkit.createInventory(null, 27, "${ChatColor.BLUE}スマートフォン")
-        gui.setItem(1, Item().make(Material.ENDER_CHEST, "${ChatColor.YELLOW}エンダーチェスト", null, null))
-        gui.setItem(3, Item().make(Material.BOOK, "${ChatColor.GREEN}テレポート", null, null))
-        gui.setItem(5, Item().make(Material.TRIPWIRE_HOOK, "${ChatColor.RED}アイテム保護", null, null))
-        gui.setItem(7, Item().make(Material.SLIME_BALL, "${ChatColor.GREEN}プレイヤー評価", null, null))
-        gui.setItem(8, Item().make(Material.COMMAND_BLOCK, "${ChatColor.YELLOW}OP用", null, null))
-        gui.setItem(10, Item().make(Material.GOLDEN_AXE, "${ChatColor.GREEN}土地保護", null, null))
-        gui.setItem(12, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
-        gui.setItem(14, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
-        gui.setItem(16, Item().make(Material.REDSTONE_BLOCK, "${ChatColor.RED}未設定", null, null))
-        gui.setItem(21, Item().make(Material.GOLD_INGOT, "${ChatColor.GOLD}所持金", "${String.format("%,d", Economy().get(player)?.toInt())}円", null))
-        gui.setItem(22, Item().make(Material.GOLD_BLOCK, "${ChatColor.GREEN}所持金変換", null, null))
+        val smartphone = mutableListOf(1, 3, 5, 7, 10, 12, 14, 16, 19, 21, 23, 25)
+        val playerData = Data.DataManager.playerDataMap.getOrPut(player.uniqueId) { PlayerData() }.smartphone ?: load(plugin, player)
         player.openInventory(gui)
+        if (playerData.isNullOrEmpty()) {
+            return
+        }
+
+        val minSize = minOf(smartphone.size, playerData.size)
+        for (i in 0 until minSize) {
+            val apkName = playerData[i]
+            gui.setItem(smartphone[i], Item().make(Material.GREEN_CONCRETE, apkName, null, giveCustomModel(apkName)))
+        }
     }
-    fun clickItem(player: Player, item: ItemStack, plugin: Plugin) {
-        val itemName = item.itemMeta?.displayName
+    fun giveCustomModel(itemName: String): Int {
+        return when (itemName) {
+            "${ChatColor.YELLOW}エンダーチェスト" -> 1
+            "${ChatColor.GREEN}所持金変換" -> 2
+            "${ChatColor.RED}アイテム保護" -> 3
+            "${ChatColor.GREEN}テレポート" -> 4
+            "${ChatColor.GREEN}プレイヤー評価" -> 5
+            "${ChatColor.GREEN}土地保護" -> 6
+            "${ChatColor.YELLOW}OP用" -> 7
+            else -> 0
+        }
+    }
+    private fun load(plugin: Plugin, player: Player): List<String>? {
+        Data.DataManager.playerDataMap.getOrPut(player.uniqueId) { PlayerData() }.smartphone =
+            Yml().getList(plugin, "smartphone", player.uniqueId.toString()) as MutableList<String>?
+        return Yml().getList(plugin, "smartphone", player.uniqueId.toString())
+    }
+    fun clickItem(player: Player, item: ItemStack, plugin: Plugin, shift: Boolean) {
+        val itemName = item.itemMeta?.displayName ?: return
         player.playSound(player, Sound.UI_BUTTON_CLICK, 1f, 1f)
+        if (shift) {
+            APK().remove(player, itemName, item.itemMeta?.customModelData ?: 0, plugin)
+            open(plugin, player)
+            return
+        }
         when (itemName) {
             "${ChatColor.YELLOW}エンダーチェスト" -> EnderChest().open(player, plugin)
             "${ChatColor.GREEN}所持金変換" -> conversion(player)
@@ -40,14 +62,15 @@ class Smartphone {
             "${ChatColor.YELLOW}OP用" -> op(player)
             "${ChatColor.GREEN}プレイヤー評価" -> Evaluation().display(player)
             "${ChatColor.GREEN}土地保護" -> wgGUI(player)
+            "${ChatColor.YELLOW}アプリ並べ替え" -> APK().sortGUIOpen(player)
         }
         if (item.type == Material.EMERALD && (item.itemMeta?.customModelData ?: return) >= 1) {
             if ((item.itemMeta?.customModelData ?: return) > 4) { return }
-            val money = itemName?.replace("${ChatColor.GREEN}", "")?.replace("円", "")?.toInt()
+            val money = itemName.replace("${ChatColor.GREEN}", "").replace("円", "")?.toInt()
             moneyItem(player, money ?: return, item)
         }
     }
-    fun opClick(item: ItemStack, plugin: Plugin, shift: Boolean) {
+    fun opClick(item: ItemStack, plugin: Plugin, shift: Boolean, player: Player) {
         when (item.itemMeta?.displayName) {
             "${ChatColor.RED}ショップ保護リセット" -> {
                 if (!shift) { return }
@@ -70,6 +93,7 @@ class Smartphone {
                 Scoreboard().make("admingift", "admingift")
                 Bukkit.broadcastMessage("${ChatColor.YELLOW}[青りんごサーバー] 運営ギフトがリセットされました")
             }
+            "${ChatColor.GREEN}テストワールド" -> player.teleport(Bukkit.getWorld("testworld")?.spawnLocation ?: return)
         }
     }
     fun wgClick(item: ItemStack, plugin: Plugin, player: Player, shift: Boolean) {
@@ -130,7 +154,6 @@ class Smartphone {
                 if (!shift) { return }
                 WorldGuard().delete(player, WorldGuard().getName(player.location) ?: return)
                 player.sendMessage("${ChatColor.RED}保護を削除しました")
-                player.closeInventory()
             }
         }
     }
@@ -177,6 +200,7 @@ class Smartphone {
         gui.setItem(0, Item().make(Material.COMMAND_BLOCK, "${ChatColor.YELLOW}リソパ更新", null, null))
         gui.setItem(2, Item().make(Material.WOODEN_AXE, "${ChatColor.RED}ショップ保護リセット", null, null))
         gui.setItem(4, Item().make(Material.DIAMOND, "${ChatColor.GREEN}運営ギフトリセット", null, null))
+        gui.setItem(6, Item().make(Material.CRAFTING_TABLE, "${ChatColor.GREEN}テストワールド", null, null))
         player.openInventory(gui)
     }
     private fun wgGUI(player: Player) {

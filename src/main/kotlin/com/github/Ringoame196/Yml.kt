@@ -55,4 +55,17 @@ class Yml {
             println("Error while saving data: ${e.message}")
         }
     }
+    fun setList(plugin: Plugin, fileName: String, key: String, list: MutableList<String>) {
+        val filePath = File(plugin.dataFolder, "$fileName.yml")
+        val yamlConfiguration = YamlConfiguration.loadConfiguration(filePath)
+
+        yamlConfiguration.set(key, list)
+
+        try {
+            yamlConfiguration.save(filePath)
+            println("Item list removed from the list in $fileName.yml with key: $key")
+        } catch (e: IOException) {
+            println("Error while saving data: ${e.message}")
+        }
+    }
 }
