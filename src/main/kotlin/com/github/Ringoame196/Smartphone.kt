@@ -80,8 +80,7 @@ class Smartphone {
                         Scoreboard().remove("protectionContract", name, 1)
                         continue
                     }
-                    WorldGuard().resetOwner(name, Bukkit.getWorld("shop") ?: return)
-                    WorldGuard().resetMember(name, Bukkit.getWorld("shop") ?: return)
+                    WorldGuard().reset(name, Bukkit.getWorld("shop") ?: return)
                     Yml().removeFromList(plugin, "conservationLand", "protectedName", name)
                 }
                 Bukkit.broadcastMessage("${ChatColor.RED}[ショップ] ショップの購入土地がリセットされました")

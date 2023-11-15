@@ -46,7 +46,7 @@ class LandPurchase {
     fun removeMemberGUI(player: Player, name: String) {
         val gui = Bukkit.createInventory(null, 27, "${ChatColor.RED}$name@メンバー削除")
         var i = 0
-        val members = WorldGuard().getMember(player.world.name, name)?.playerDomain?.uniqueIds
+        val members = WorldGuard().getMember(player.world, name)?.playerDomain?.uniqueIds
         for (worldPlayer in members?.toList() ?: return) {
             gui.addItem(Item().make(Material.PLAYER_HEAD, worldPlayer.toString(), Bukkit.getPlayer(worldPlayer as UUID)?.name ?: worldPlayer.toString(), null))
             i++
