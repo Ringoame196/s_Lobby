@@ -21,7 +21,7 @@ class Smartphone {
         val minSize = minOf(smartphone.size, playerData.size)
         for (i in 0 until minSize) {
             val apkName = playerData[i]
-            gui.setItem(smartphone[i], Item().make(Material.GREEN_CONCRETE, apkName, null, giveCustomModel(apkName)))
+            gui.setItem(smartphone[i], Item().make(Material.GREEN_CONCRETE, "${ChatColor.YELLOW}[アプリ]$apkName", null, giveCustomModel(apkName)))
         }
     }
     fun giveCustomModel(itemName: String): Int {
@@ -42,9 +42,9 @@ class Smartphone {
         return Yml().getList(plugin, "smartphone", player.uniqueId.toString())
     }
     fun clickItem(player: Player, item: ItemStack, plugin: Plugin, shift: Boolean) {
-        val itemName = item.itemMeta?.displayName ?: return
+        val itemName = item.itemMeta?.displayName?.replace("${ChatColor.YELLOW}[アプリ]", "") ?: return
         player.playSound(player, Sound.UI_BUTTON_CLICK, 1f, 1f)
-        if (shift) {
+        if (shift && item.type == Material.GREEN_CONCRETE) {
             APK().remove(player, itemName, item.itemMeta?.customModelData ?: 0, plugin)
             open(plugin, player)
             return
@@ -123,10 +123,6 @@ class Smartphone {
             "${ChatColor.YELLOW}保護情報" -> {
                 player.closeInventory()
                 player.sendMessage("${ChatColor.YELLOW}-----保護情報-----")
-                if (WorldGuard().getName(player.location) == null) {
-                    player.sendMessage("${ChatColor.RED}保護されていません")
-                    return
-                }
                 player.sendMessage("${ChatColor.GOLD}保護名:${WorldGuard().getName(player.location)}")
                 player.sendMessage("${ChatColor.YELLOW}オーナー:" + if (WorldGuard().getOwnerOfRegion(player.location)?.contains(player.uniqueId) == true) { "${ChatColor.GOLD}あなたはオーナーです" } else { "${ChatColor.RED}あなたはオーナーではありません" })
                 player.sendMessage("${ChatColor.AQUA}メンバー:" + if (WorldGuard().getMemberOfRegion(player.location)?.contains(player.uniqueId) == true) { "${ChatColor.GOLD}あなたはメンバーです" } else { "${ChatColor.RED}あなたはメンバーではありません" })
@@ -136,7 +132,7 @@ class Smartphone {
                     Player().errorMessage(player, "自分の保護土地内で実行してください")
                     return
                 }
-                LandPurchase().addMemberGUI(player, WorldGuard().getName(player.location) ?: return)
+                LandPurchase().addMemberGUI(player, WorldGuard().getName(player.location))
             }
             "${ChatColor.RED}メンバー削除" -> {
                 if (WorldGuard().getOwnerOfRegion(player.location)?.contains(player.uniqueId) != true) {
@@ -219,7 +215,7 @@ class Smartphone {
         player.openInventory(gui)
     }
     private fun moneyItem(player: Player, money: Int, item: ItemStack) {
-        if ((Economy().get(player.name) ?: return) < money) {
+        if ((Economy().get(player.name)) < money) {
             Player().errorMessage(player, "お金が足りません")
         } else {
             val giveItem = item.clone()
