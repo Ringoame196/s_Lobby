@@ -1,6 +1,5 @@
 package com.github.Ringoame196
 
-import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.Material
 import org.bukkit.Sound
@@ -9,7 +8,7 @@ import org.bukkit.inventory.ItemStack
 
 class ItemProtection {
     fun open(player: Player) {
-        val gui = Bukkit.createInventory(null, 9, "${ChatColor.YELLOW}アイテム保護")
+        val gui = GUI().make("${ChatColor.YELLOW}アイテム保護", 9)
         for (i in 0 until gui.size) {
             gui.setItem(i, Item().make(Material.RED_STAINED_GLASS_PANE, " ", null, null))
         }
@@ -18,7 +17,6 @@ class ItemProtection {
         player.openInventory(gui)
     }
     fun chekcProtection(item: ItemStack, player: Player): ItemStack {
-        val meta = item.itemMeta
         if (item.itemMeta?.lore == null) {
             protection(item, player)
             return item
