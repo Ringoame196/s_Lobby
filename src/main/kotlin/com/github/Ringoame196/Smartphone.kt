@@ -171,7 +171,7 @@ class Smartphone {
     }
     fun protection(player: Player, item: ItemStack, name: String) {
         val price = item.itemMeta?.lore?.get(0)?.replace("円", "")?.toInt() ?: return
-        if ((Economy().get(player) ?: return) < price) {
+        if ((Economy().get(player.name)) < price) {
             Player().errorMessage(player, "お金が足りません")
             return
         }
@@ -179,7 +179,7 @@ class Smartphone {
         player.performCommand("rg claim $name")
         if (WorldGuard().getProtection(player, name)) {
             player.sendMessage("${ChatColor.GREEN}[WG]正常に保護をかけました")
-            Economy().remove(player, price, true)
+            Economy().remove(player.name, price, true)
             player.playSound(player, Sound.BLOCK_ANVIL_USE, 1f, 1f)
         }
         player.closeInventory()
@@ -219,13 +219,13 @@ class Smartphone {
         player.openInventory(gui)
     }
     private fun moneyItem(player: Player, money: Int, item: ItemStack) {
-        if ((Economy().get(player) ?: return) < money) {
+        if ((Economy().get(player.name) ?: return) < money) {
             Player().errorMessage(player, "お金が足りません")
         } else {
             val giveItem = item.clone()
             giveItem.amount = 1
             player.inventory.addItem(giveItem)
-            Economy().remove(player, money, true)
+            Economy().remove(player.name, money, true)
         }
         player.closeInventory()
     }

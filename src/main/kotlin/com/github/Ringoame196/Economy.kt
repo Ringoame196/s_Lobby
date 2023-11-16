@@ -7,39 +7,36 @@ import org.bukkit.Material
 import org.bukkit.entity.Player
 
 class Economy {
-    fun get(player: Player): Double? {
-        val rsp = Bukkit.getServicesManager().getRegistration(Economy::class.java)
-        val economy = rsp?.provider
-        return economy?.getBalance(player)
+    private val uneiName = "akamaruXkun"
+    private val rsp = Bukkit.getServicesManager().getRegistration(Economy::class.java)
+    private val economy = rsp?.provider
+    fun get(player: String): Double {
+        return economy?.getBalance(player) ?: 0.0
     }
-    fun getUnei(player: Player) {
-        val rsp = Bukkit.getServicesManager().getRegistration(Economy::class.java)
-        val economy = rsp?.provider
-        val price = economy?.getBalance("akamaruXkun")?.toInt() ?: return
-        player.sendMessage("${ChatColor.YELLOW}[運営のお金]" + if (price >= 1000) { "${ChatColor.AQUA}" } else { "${ChatColor.DARK_RED}" } + price + "円")
+    fun getUnei(): Double {
+        return get(uneiName) ?: 0.0
     }
-    fun add(player: Player, amount: Int, unei: Boolean) {
-        val rsp = Bukkit.getServicesManager().getRegistration(Economy::class.java)
-        val economy = rsp?.provider
+    private fun giveBill(player: Player?, amount: Int) {
+        Player().errorMessage(player ?: return, "決済処理が正常に処理されませんでした(error1)")
+        player.sendMessage("${ChatColor.GREEN}そのため手形発行されました(運営に渡してください)")
+        player.inventory.addItem(Item().make(Material.PAPER, "${ChatColor.GREEN}運営手形[公式]", "値段:${amount}円", 11))
+    }
+    fun add(player: String, amount: Int, unei: Boolean) {
         if (unei) {
-            if (economy?.getBalance("akamaruXkun")!! < amount.toDouble()) {
-                Player().errorMessage(player, "決済処理が正常に処理されませんでした(error1)")
-                player.sendMessage("${ChatColor.GREEN}そのため手形発行されました(運営に渡してください)")
-                player.inventory.addItem(Item().make(Material.PAPER, "${ChatColor.GREEN}運営手形[公式]", "値段:${amount}円", 11))
-                return
+            if (getUnei() < amount.toDouble()) {
+                giveBill(Bukkit.getPlayer(player), amount)
+            } else {
+                remove(uneiName, amount, false)
             }
-            economy.withdrawPlayer("akamaruXkun", amount.toDouble())
         }
-        economy!!.depositPlayer(player, amount.toDouble())
-        Player().sendActionBar(player, "${ChatColor.AQUA}+${amount}円")
+        economy?.depositPlayer(player, amount.toDouble())
+        Player().sendActionBar(Bukkit.getPlayer(player) ?: return, "${ChatColor.AQUA}+${amount}円")
     }
-    fun remove(player: Player, amount: Int, unei: Boolean) {
-        val rsp = Bukkit.getServicesManager().getRegistration(Economy::class.java)
-        val economy = rsp?.provider
+    fun remove(player: String, amount: Int, unei: Boolean) {
         economy?.withdrawPlayer(player, amount.toDouble())
-        Player().sendActionBar(player, "${ChatColor.RED}-${amount}円")
         if (unei) {
-            economy?.depositPlayer("akamaruXkun", amount.toDouble())
+            add(uneiName, amount, false)
         }
+        Player().sendActionBar(Bukkit.getPlayer(player) ?: return, "${ChatColor.RED}-${amount}円")
     }
 }

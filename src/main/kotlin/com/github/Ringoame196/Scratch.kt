@@ -66,7 +66,7 @@ class Scratch {
         if (result) {
             player.sendMessage("${ChatColor.GREEN}[スクラッチ]当選！")
             player.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_BLAST_FAR, 1f, 1f)
-            Economy().add(player, price, true)
+            Economy().add(player.name, price, true)
         } else {
             player.sendMessage("${ChatColor.GOLD}[スクラッチ]ハズレ")
             player.playSound(player, Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 1f)

@@ -55,10 +55,10 @@ class LandPurchase {
         player.openInventory(gui)
     }
     fun advancePayment(player: Player, name: String, money: Int) {
-        if (money > Economy().get(player)!!) {
+        if (money > Economy().get(player.name)) {
             Player().errorMessage(player, "お金が足りません")
         } else {
-            Economy().remove(player, money, true)
+            Economy().remove(player.name, money, true)
             Scoreboard().set("protectionContract", name, 2)
             player.sendMessage("${ChatColor.AQUA}前払いしました")
         }
@@ -92,7 +92,7 @@ class LandPurchase {
         when (item.itemMeta?.displayName) {
             "${ChatColor.GREEN}購入" -> {
                 val money = item.itemMeta?.lore?.get(0)?.replace("円", "")?.toInt() ?: return
-                if (money > Economy().get(player)!!) {
+                if (money > Economy().get(player.name)) {
                     Player().errorMessage(player, "お金が足りません")
                     return
                 }
@@ -104,7 +104,7 @@ class LandPurchase {
                 WorldGuard().addOwnerToRegion(name, player)
                 player.closeInventory()
                 player.playSound(player, Sound.BLOCK_ANVIL_USE, 1f, 1f)
-                Economy().remove(player, money, true)
+                Economy().remove(player.name, money, true)
                 if (player.world.name != "shop") { return }
                 Yml().addToList(plugin, "conservationLand", "protectedName", name)
                 Scoreboard().set("protectionContract", name, 1)

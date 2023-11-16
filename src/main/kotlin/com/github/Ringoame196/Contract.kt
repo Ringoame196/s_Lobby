@@ -35,11 +35,11 @@ class Contract {
             Player().errorMessage(player, "金額が違います")
             return
         }
-        if (Economy().get(player)!! < money.toInt()) {
+        if (Economy().get(player.name) < money.toInt()) {
             Player().errorMessage(player, "お金が足りません")
             return
         }
-        Economy().remove(player, money.toInt(), false)
+        Economy().remove(player.name, money.toInt(), false)
         val currentDate = LocalDate.now()
 
         // 日付を指定したフォーマットで文字列として取得
@@ -61,7 +61,7 @@ class Contract {
             return
         }
         val money = item.itemMeta?.displayName?.replace("${ChatColor.RED}契約本@", "")?.replace("円契約", "")?.toInt()
-        Economy().add(player, money ?: return, false)
+        Economy().add(player.name, money ?: return, false)
         player.inventory.setItemInMainHand(ItemStack(Material.AIR))
     }
     fun copyBlock(item: ItemStack, player: Player): ItemStack {
