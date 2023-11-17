@@ -45,6 +45,11 @@ class Evaluation {
             }
         )
         Scoreboard().set("evaluationVote", player.name, 1)
+        try {
+            Database().incrementPlayerUUID(player, "aoringoserver", "playerpoint")
+        } catch (e: Error) {
+            Bukkit.broadcastMessage(e.message.toString())
+        }
         player.closeInventory()
         player.sendMessage("${ChatColor.YELLOW}プレイヤー評価しました")
     }
