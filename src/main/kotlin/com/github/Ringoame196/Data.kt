@@ -1,6 +1,6 @@
 package com.github.Ringoame196
 
-import java.util.*
+import java.util.UUID
 
 class Data {
     object DataManager {

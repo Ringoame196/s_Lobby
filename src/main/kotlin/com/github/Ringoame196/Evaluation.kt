@@ -35,28 +35,22 @@ class Evaluation {
     }
     fun void(target: ItemStack, button: String, player: Player) {
         val targetUUID = target.itemMeta?.lore?.get(1) ?: return
-        val evaluation = Scoreboard().getValue("evaluation", targetUUID)
-        Scoreboard().set(
-            "evaluation", targetUUID,
+        val evaluation = Database().getInt(targetUUID, "aoringoserver", "playerpoint", "point")
+        Database().setPlayerPoint(
+            targetUUID, "aoringoserver", "playerpoint",
             when (button) {
                 "${ChatColor.GREEN}高評価" -> evaluation + 1
                 "${ChatColor.RED}低評価" -> evaluation - 1
                 else -> return
             }
         )
-        Scoreboard().set("evaluationVote", player.name, 1)
-        try {
-            Database().incrementPlayerUUID(player, "aoringoserver", "playerpoint")
-        } catch (e: Error) {
-            Bukkit.broadcastMessage(e.message.toString())
-        }
         player.closeInventory()
         player.sendMessage("${ChatColor.YELLOW}プレイヤー評価しました")
     }
     private fun playerHead(target: Player): ItemStack {
         val item = ItemStack(Material.PLAYER_HEAD)
         val meta = item.itemMeta as SkullMeta
-        val evaluation = Scoreboard().getValue("evaluation", target.uniqueId.toString())
+        val evaluation = Database().getInt(target.uniqueId.toString(), "aoringoserver", "playerpoint", "point")
         meta.setDisplayName(target.name)
         meta.setOwningPlayer(target)
         meta.lore = mutableListOf("評価:$evaluation", target.uniqueId.toString())

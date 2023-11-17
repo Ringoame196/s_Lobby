@@ -1,58 +1,69 @@
 package com.github.Ringoame196
 
-import org.bukkit.Bukkit
-import org.bukkit.entity.Player
 import java.sql.Connection
 import java.sql.DriverManager
-import java.sql.SQLException
 
 class Database {
-    fun incrementPlayerUUID(player: Player, databaseName: String, tableName: String) {
-        // データベース接続
-        val connection: Connection?
-        try {
-            connection = DriverManager.getConnection(
-                "jdbc:mysql://${Data.DataManager.databaseHost}:${Data.DataManager.databasePort}/$databaseName",
-                Data.DataManager.databaseUsername,
-                Data.DataManager.databasePassword
-            )
-        } catch (e: SQLException) {
-            Bukkit.broadcastMessage(e.message.toString())
-            return
+    private val host = Data.DataManager.databaseHost
+    private val port = Data.DataManager.databasePort
+    private val userName = Data.DataManager.databaseUsername
+    private val password = Data.DataManager.databasePassword
+
+    private fun connection(databaseName: String): Connection? {
+        return DriverManager.getConnection(
+            "jdbc:mysql://$host:$port/$databaseName",
+            userName,
+            password
+        )
+    }
+    private fun make(player: String, newPoint: Int, databaseName: String, tableName: String) {
+        val insertQuery = "INSERT INTO $tableName (uuid, point) VALUES (?, ?);"
+        val insertStatement = connection(databaseName)?.prepareStatement(insertQuery)
+        insertStatement?.setString(1, player)
+        insertStatement?.setInt(2, newPoint)
+
+        insertStatement?.executeUpdate()
+        insertStatement?.close()
+    }
+    fun getInt(player: String, databaseName: String, tableName: String, point: String): Int {
+        var getPoint = 0
+        val connection = connection(databaseName)
+        val selectQuery = "SELECT * FROM $tableName WHERE uuid = ?;"
+        val selectStatement = connection?.prepareStatement(selectQuery)
+        selectStatement?.setString(1, player)
+        val resultSet = selectStatement?.executeQuery()
+
+        if (resultSet?.next() == true) {
+            getPoint = resultSet.getInt(point)
         }
+
+        // 後処理
+        selectStatement?.close()
+        connection?.close()
+
+        return getPoint
+    }
+    fun setPlayerPoint(player: String, databaseName: String, tableName: String, newPoint: Int) {
+        // データベース接続
+        val connection = connection(databaseName) ?: return
 
         // プレイヤーのUUIDで検索
         val selectQuery = "SELECT * FROM $tableName WHERE uuid = ?;"
         val selectStatement = connection.prepareStatement(selectQuery)
-        selectStatement.setString(1, player.uniqueId.toString())
+        selectStatement.setString(1, player)
         val resultSet = selectStatement.executeQuery()
 
         if (resultSet.next()) {
             // データが存在する場合、更新クエリを実行
-            val updateQuery = "UPDATE $tableName SET point = point + 1 WHERE uuid = ?;"
+            val updateQuery = "UPDATE $tableName SET point = ? WHERE uuid = ?;"
             val updateStatement = connection.prepareStatement(updateQuery)
-            updateStatement.setString(1, player.uniqueId.toString())
+            updateStatement.setInt(1, newPoint)
+            updateStatement.setString(2, player)
 
-            val rowsUpdated = updateStatement.executeUpdate()
-            if (rowsUpdated > 0) {
-                println("UUIDが更新されました。")
-            } else {
-                println("該当するデータが見つかりませんでした。")
-            }
+            updateStatement.executeUpdate()
             updateStatement.close()
         } else {
-            // データが存在しない場合、新しく作成
-            val insertQuery = "INSERT INTO $tableName (uuid, point) VALUES (?, 1);"
-            val insertStatement = connection.prepareStatement(insertQuery)
-            insertStatement.setString(1, player.uniqueId.toString())
-
-            val rowsInserted = insertStatement.executeUpdate()
-            if (rowsInserted > 0) {
-                println("新しいデータが作成されました。")
-            } else {
-                println("新しいデータの作成に失敗しました。")
-            }
-            insertStatement.close()
+            make(player, newPoint, databaseName, tableName)
         }
 
         // 後処理
