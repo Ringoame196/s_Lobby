@@ -36,6 +36,7 @@ class Evaluation {
     fun void(target: ItemStack, button: String, player: Player) {
         val targetUUID = target.itemMeta?.lore?.get(1) ?: return
         val evaluation = Database().getInt(targetUUID, "aoringoserver", "playerpoint", "point")
+        Scoreboard().set("evaluationVote", player.name, 1)
         Database().setPlayerPoint(
             targetUUID, "aoringoserver", "playerpoint",
             when (button) {

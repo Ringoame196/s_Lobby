@@ -17,19 +17,26 @@ class Database {
         )
     }
     private fun make(player: String, newPoint: Int, databaseName: String, tableName: String) {
-        val insertQuery = "INSERT INTO $tableName (uuid, point) VALUES (?, ?);"
-        val insertStatement = connection(databaseName)?.prepareStatement(insertQuery)
+        val insertStatement = connection(databaseName)?.prepareStatement(insertQuery(tableName))
         insertStatement?.setString(1, player)
         insertStatement?.setInt(2, newPoint)
 
         insertStatement?.executeUpdate()
         insertStatement?.close()
     }
+    private fun selectQuery(tableName: String): String {
+        return "SELECT * FROM $tableName WHERE uuid = ?;"
+    }
+    private fun updateQuery(tableName: String): String {
+        return "UPDATE $tableName SET point = ? WHERE uuid = ?;"
+    }
+    private fun insertQuery(tableName: String): String {
+        return "INSERT INTO $tableName (uuid, point) VALUES (?, ?);"
+    }
     fun getInt(player: String, databaseName: String, tableName: String, point: String): Int {
         var getPoint = 0
         val connection = connection(databaseName)
-        val selectQuery = "SELECT * FROM $tableName WHERE uuid = ?;"
-        val selectStatement = connection?.prepareStatement(selectQuery)
+        val selectStatement = connection?.prepareStatement(selectQuery(tableName))
         selectStatement?.setString(1, player)
         val resultSet = selectStatement?.executeQuery()
 
@@ -48,15 +55,13 @@ class Database {
         val connection = connection(databaseName) ?: return
 
         // プレイヤーのUUIDで検索
-        val selectQuery = "SELECT * FROM $tableName WHERE uuid = ?;"
-        val selectStatement = connection.prepareStatement(selectQuery)
+        val selectStatement = connection.prepareStatement(selectQuery(tableName))
         selectStatement.setString(1, player)
         val resultSet = selectStatement.executeQuery()
 
         if (resultSet.next()) {
             // データが存在する場合、更新クエリを実行
-            val updateQuery = "UPDATE $tableName SET point = ? WHERE uuid = ?;"
-            val updateStatement = connection.prepareStatement(updateQuery)
+            val updateStatement = connection.prepareStatement(updateQuery(tableName))
             updateStatement.setInt(1, newPoint)
             updateStatement.setString(2, player)
 
