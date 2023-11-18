@@ -2,6 +2,7 @@ package com.github.Ringoame196
 
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.PreparedStatement
 
 class Database {
     private val host = Data.DataManager.databaseHost
@@ -33,6 +34,10 @@ class Database {
     private fun insertQuery(tableName: String): String {
         return "INSERT INTO $tableName (uuid, point) VALUES (?, ?);"
     }
+    private fun postProcessing(selectStatement: PreparedStatement?, connection: Connection?) {
+        selectStatement?.close()
+        connection?.close()
+    }
     fun getInt(player: String, databaseName: String, tableName: String, point: String): Int {
         var getPoint = 0
         val connection = connection(databaseName)
@@ -45,8 +50,7 @@ class Database {
         }
 
         // 後処理
-        selectStatement?.close()
-        connection?.close()
+        postProcessing(selectStatement, connection)
 
         return getPoint
     }
@@ -72,7 +76,6 @@ class Database {
         }
 
         // 後処理
-        selectStatement.close()
-        connection.close()
+        postProcessing(selectStatement, connection)
     }
 }

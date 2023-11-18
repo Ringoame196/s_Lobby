@@ -3,13 +3,9 @@ package com.github.Ringoame196
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.Material
-import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.SkullMeta
-import org.bukkit.plugin.Plugin
-import java.io.File
-import java.io.IOException
 
 class Evaluation {
     fun display(player: Player) {
@@ -57,18 +53,5 @@ class Evaluation {
         meta.lore = mutableListOf("評価:$evaluation", target.uniqueId.toString())
         item.setItemMeta(meta)
         return item
-    }
-    fun saveYml(player: Player, plugin: Plugin) {
-        val filePath = File(plugin.dataFolder, "/evaluation.yml")
-        val yamlConfiguration = YamlConfiguration.loadConfiguration(filePath)
-
-        // 既存のデータを上書き
-        yamlConfiguration.set("${player.uniqueId}", Scoreboard().getValue("evaluation", player.uniqueId.toString()))
-
-        try {
-            yamlConfiguration.save(filePath)
-        } catch (e: IOException) {
-            println("Error while saving data: ${e.message}")
-        }
     }
 }
